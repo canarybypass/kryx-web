@@ -22,7 +22,11 @@ venv/
 frontend/node_modules/
 frontend/build/
 frontend/.env.local
+/node_modules/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Vercel
+.vercel

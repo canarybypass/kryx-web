@@ -1,221 +1,175 @@
-<div align="center">
+# Kryx — Marketing Landing
 
-<img src="assets/hero.svg" alt="Kryx - autonomous offensive-security agent" width="100%">
+A premium, 3D-driven marketing site for **Kryx**, an autonomous multi-agent
+penetration-testing platform.
 
-<br/>
+> **Slogan:** _Think like the attacker. Find it first._
 
-![status](https://img.shields.io/badge/status-private%20beta-C8F135?style=flat-square)
-![detectors](https://img.shields.io/badge/detectors-48-2DE2E6?style=flat-square)
-![findings](https://img.shields.io/badge/findings-proven%20by%20execution-64D8A3?style=flat-square)
-![python](https://img.shields.io/badge/python-3.12-3A4150?style=flat-square)
-![license](https://img.shields.io/badge/license-proprietary-9B6DFF?style=flat-square)
-
-**Autonomous offensive-security agent.**
-Finds vulnerabilities, **proves** each one by execution, chains them to real impact, and writes the fix,
-across live web apps and source code. Reasoning where scanners are blind, low-noise where scanners are loud.
-
-</div>
-
-<img src="assets/scan.svg" alt="Kryx scan output" width="100%">
-
----
-
-## The problem
-
-Scanners are loud and shallow: they flag *possible* issues and drown you in false positives, and they cannot reason about business logic. Manual pentesting is deep but slow and does not scale. Kryx sits in between - it reasons like a pentester and confirms like a scanner, so what lands in the report is small, real, and already proven.
-
----
-
-## Why Kryx
-
-| | |
-|---|---|
-| **Proof, not noise** | Every finding is reproduced by a tool. No working proof, no report line. |
-| **Near-zero false positives** | A visible attacker/defender/judge debate kills weak findings before you see them. |
-| **Safe on production** | Non-destructive by default, hard limits, and a domain-ownership gate that refuses any host you are not authorized to test. |
-| **Reasoning + coverage** | A deterministic sweep of 48 detectors, then parallel LLM agents that chain findings into real impact. |
-
----
-
-## What it does
-
-<img src="assets/pipeline.svg" alt="Kryx black-box pipeline" width="100%">
-
-### Black-box, live targets
-A deterministic pipeline maps the real attack surface and confirms every vuln with a tool, so findings are proven, not guessed:
-
-```
-recon -> crawl (JS-aware) -> sweep (every detector on every endpoint) -> business-logic
-      -> LLM hunt -> adversarial debate (verify) -> attack-chains -> report
-```
-
-**Tool-confirmed classes (48 detectors):**
-
-- **Injection** SQLi · command injection (RCE) · SSTI · NoSQL · XXE · LDAP · XPath · SSI
-- **Access & auth** IDOR/BOLA · JWT (alg=none, weak secret) · host-header / reset poisoning
-- **Server-side** SSRF (out-of-band) · **SSRF -> cloud metadata -> credentials** · insecure deserialization · prototype pollution · insecure file upload
-- **Client-side** XSS (reflected/stored/DOM) · CSRF · clickjacking · open redirect · CORS
-- **Exposure** secrets/configs · `.git`/`.svn` · management panels (actuator, phpMyAdmin, Jenkins) · GraphQL introspection
-- **Protocol** HTTP request smuggling · CRLF / header injection · parameter pollution · WebSocket hijacking
-- **Robustness** resource-exhaustion / unbounded input (non-destructive) · known CVEs & exposures (nuclei)
-
-**Business-logic flaws** scanners can't find: negative price/quantity, price and role tampering, broken object-level access, confirmed by the server's own response.
-
-**Visible adversarial debate:** an attacker argues a finding is real, a defender attacks it, a judge rules, before it reaches the report.
-
-Every finding ships a **proof-of-concept and a ready-to-apply fix**.
-
-### White-box, source code
-Point it at a repo or path: reasoning-based taint analysis, an adversarial validation pass to kill false positives, and ready-to-apply fix code.
-
-### Autonomous mode
-Discovers authorized targets (bug-bounty scopes, OSS repos) and audits them, behind a hard **authorization gate** that refuses any host it isn't allowed to test.
-
----
-
-## Sample run
-
-```text
-$ python run_scan.py https://your-authorized-target
-
-[recon]   target -> 34.202.86.158  (Node.js · Express · React/Vite · k8s ingress)
-[crawl]   41 endpoints · 18 params · 6 forms
-[sweep]   nuclei: /config.json leaks API keys                       [CRITICAL]
-[hunt]    [injection]  cmdi /api/spawn?command= -> remote shell      [CRITICAL]
-[hunt]    [auth]       jwt alg=none accepted -> token forgery        [HIGH]
-[hunt]    [ssrf]       /api/file?url= -> 169.254.169.254 (AWS)       [CRITICAL]
-[debate]  attacker / defender / judge -> VALIDATED (reproduced x20)
-[chains]  open-redirect -> ssrf -> metadata -> cloud takeover
-[report]  6 findings · 2 chains · every one proven
-
-RESULT    critical 3 · high 1 · medium 2 · false-positives ~0
-```
-
-### A finding, in full
-
-Every finding ships proof and a fix, not a guess:
-
-```text
-[CRITICAL]  Command Injection · /api/spawn
-CVSS 9.8 · CWE-78 · confirmed by execution
-
-Proof:    GET /api/spawn?command=id
-          -> uid=1000(node) gid=1000(node)          # a shell came back
-Impact:   arbitrary commands as the app user; pivot to cloud creds via SSRF
-Fix:      never pass user input to a shell; use execFile with a fixed argv allow-list
-```
-
----
-
-## How the debate works
-
-A finding does not reach you because one agent believed it. Every candidate goes through a short adversarial round:
-
-- **Attacker** states the vulnerability and the exact request that triggers it.
-- **Defender** attacks that claim - wrong context, sanitized sink, unreachable code, benign reflection.
-- **Judge** rules on the evidence and the tool result, and only a survivor is reported.
-
-This is the layer that kills the false positives scanners can't, and it is why a Kryx report is short.
-
----
-
-## Design principles
-
-- **Proof or it doesn't ship.** No finding is reported without a tool reproducing it. A claim without a working proof is dropped, not downgraded.
-- **Non-destructive by default.** Aggressive and resource-exhaustion checks are bounded and off unless you explicitly opt in. Kryx is built to run against production without breaking it.
-- **Authorization first.** Every active scan passes a hard gate; unauthorized hosts are refused, and the gate is covered by tests.
-- **Reasoning on top of determinism.** A deterministic 48-detector sweep guarantees coverage; parallel LLM agents add the reasoning and the chains that turn findings into real impact.
-- **A fix with every finding.** Each report line ships a proof-of-concept and ready-to-apply remediation, not just a severity label.
-
----
-
-## Where it fits
-
-- **Continuous testing** of your own apps and APIs between pentests.
-- **Pre-release gate** in CI - point it at a staging URL or a pull request.
-- **Bug-bounty and OSS auditing** within authorized scopes.
-- **Source-code review** on any repo or path, with taint analysis and fix code.
-
----
-
-## Repository layout
-
-```
-kryx/
-├── backend/                 # the engine + SaaS API
-│   ├── core/
-│   │   ├── harness/         # pipeline: crawler · sweep · hunter · debate · chains · reporter · code_auditor
-│   │   ├── tools/           # deterministic detectors (scanner.py + probes_ext.py: 48 checks)
-│   │   ├── agents/          # LLM prompts
-│   │   └── autonomous/      # authorization gate + target discovery
-│   ├── api/                 # FastAPI SaaS routes (auth · scans · history)
-│   ├── billing/             # Stripe integration
-│   ├── integrations/        # GitHub / GitLab webhooks
-│   ├── testbed/             # intentionally-vulnerable app for local testing
-│   ├── tests/               # pytest suite (authz gate · dedup · pipeline dispatch)
-│   ├── run_scan.py          # CLI runner
-│   └── main.py              # SaaS API entrypoint
-├── frontend/                # React product UI (self-serve dashboard)
-├── docs/                    # architecture · database · integrations · coverage matrix
-└── assets/                  # brand + diagrams
-```
+This is a standalone showcase site. It does **not** contain the product
+dashboard — the "Launch App" button links out to it (see
+[Linking the dashboard](#linking-the-dashboard)).
 
 ---
 
 ## Quick start
 
 ```bash
-cd backend
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-playwright install chromium          # for the JS-aware crawl / DOM XSS
-
-cp .env.example .env                 # set KRYX_MODEL + OPENROUTER_API_KEY
-
-# scan a target (authorized only)
-python run_scan.py https://your-authorized-target
+cd web
+npm install
+npm run dev      # http://localhost:3000
 ```
-
-For known-CVE coverage, install [nuclei](https://github.com/projectdiscovery/nuclei) and make sure it's on `PATH`.
-
-### Tests
 
 ```bash
-cd backend && ./venv/bin/python -m pytest tests/ -q
+npm run build    # production build
+npm run start    # serve the production build
+```
+
+Requires **Node 20+** (developed on Node 22).
+
+---
+
+## Tech stack
+
+| Concern | Choice |
+| --- | --- |
+| Framework | Next.js 15 (App Router) + TypeScript |
+| 3D | React Three Fiber + drei + postprocessing |
+| Shaders | Custom GLSL (noise distortion, glow, travelling-pulse edges) |
+| Scroll / motion | GSAP + ScrollTrigger, Lenis smooth-scroll, Framer Motion |
+| Styling | Tailwind CSS v4 (design tokens in `globals.css`) |
+| Fonts | Space Grotesk (display) + JetBrains Mono (mono) via `next/font` |
+
+---
+
+## Project structure
+
+```
+web/
+├─ src/
+│  ├─ app/
+│  │  ├─ layout.tsx        # fonts, metadata, providers
+│  │  ├─ page.tsx          # section composition (edit section order here)
+│  │  ├─ globals.css       # ◀ DESIGN TOKENS (colours, fonts, utilities)
+│  │  └─ icon.svg          # favicon
+│  ├─ lib/
+│  │  ├─ fonts.ts          # next/font config
+│  │  ├─ gpu.ts            # detect-gpu → scene quality (high/low/static)
+│  │  └─ motion.ts         # reduced-motion hook + easing tokens
+│  ├─ data/                # ◀ ALL COPY / CONTENT lives here
+│  │  ├─ site.ts           # name, links, appUrl, tagline, nav
+│  │  ├─ pipeline.ts       # the 5 stages + 8 hunters
+│  │  ├─ tools.ts          # integrated engine tools
+│  │  ├─ comparison.ts     # comparison table + differentiators
+│  │  ├─ pricing.ts        # plans
+│  │  └─ terminal-log.ts   # demo scan stream (fictional)
+│  └─ components/
+│     ├─ providers/        # Lenis, Cursor, ScrollProgress, MotionConfig
+│     ├─ three/            # ◀ 3D scenes + shaders
+│     │  ├─ AttackGraph.tsx   # primary hero scene (node graph + core)
+│     │  ├─ CoreFallback.tsx  # lighter scene for weak GPUs
+│     │  ├─ Scene.tsx         # Canvas + postprocessing (bloom/CA)
+│     │  ├─ HeroCanvas.tsx    # lazy loader + quality gating + poster
+│     │  ├─ EchoCanvas.tsx    # final-CTA 3D echo (high-tier only)
+│     │  └─ shaders/*.glsl.ts # GLSL source as template strings
+│     ├─ sections/         # one file per page section
+│     └─ ui/               # buttons, cards, badges, nav, forms
 ```
 
 ---
 
-## Configuration (`backend/.env`)
+## Customising
 
-| Var | Purpose |
-|-----|---------|
-| `OPENROUTER_API_KEY` | LLM provider key |
-| `KRYX_MODEL` | reasoning model |
-| `KRYX_HUNTERS` | parallel LLM hunters (default 8) |
-| `OPENROUTER_MAX_TOKENS` | output cap per call (default 8000) |
-| `KRYX_RESOURCE_AGGRESSIVE` | `1` to allow larger resource-exhaustion payloads (explicit consent) |
-| `KRYX_NUCLEI` | set `0` to skip the nuclei stage |
+### Colours & fonts
+
+All design tokens live in **`src/app/globals.css`** under `@theme`:
+
+```css
+--color-accent:   #b6ff3c;  /* signature: toxic lime */
+--color-accent-2: #18e0ff;  /* secondary: cyber cyan  */
+--color-danger:   #ff2e4d;  /* semantic "rejected" only */
+--color-bg-0:     #050507;  /* base black */
+```
+
+Change them here and they propagate everywhere (utilities like `bg-accent`,
+`text-accent-2`, and the 3D scenes which read the same hexes).
+
+> The 3D shaders hold their own copies of the accent hexes in
+> `AttackGraph.tsx` / `CoreFallback.tsx` (`ACCENT`, `SECONDARY`). Update those
+> two constants too if you re-brand.
+
+Fonts are swapped in **`src/lib/fonts.ts`** (any `next/font/google` family).
+
+### Copy / text
+
+Edit the files in **`src/data/`** — nothing is hard-coded in components:
+
+- Headlines & nav → `site.ts`
+- Pipeline stages / hunters → `pipeline.ts`
+- Tool list → `tools.ts`
+- Comparison rows & differentiators → `comparison.ts`
+- Pricing tiers → `pricing.ts`
+- The streamed scan log → `terminal-log.ts` _(fictional / demo only)_
+
+### The 3D hero
+
+- **Swap the scene:** `src/components/three/Scene.tsx` chooses
+  `AttackGraph` (high) vs `CoreFallback` (low).
+- **Tune the look:** node count / radius in `AttackGraph.tsx`
+  (`NODE_COUNT`, `CLOUD_RADIUS`); shader behaviour in
+  `three/shaders/*.glsl.ts`.
+- **Postprocessing:** bloom / chromatic-aberration strength in `Scene.tsx`.
+- **Quality gating:** `src/lib/gpu.ts` decides `high | low | static` from
+  `detect-gpu`, screen size, pointer type and `prefers-reduced-motion`.
 
 ---
 
-## Authorization & safety
+## Linking the dashboard
 
-Kryx **only** actively scans hosts that are local/lab, listed in
-`backend/core/autonomous/authorized_scopes.txt`, or in a fetched bug-bounty scope
-whose program permits automated testing. Everything else is refused, and the gate is
-covered by tests. Aggressive / resource-exhaustion checks are non-destructive by
-default and require an explicit opt-in. **Only test what you are authorized to test.**
+The "Launch App" button (navbar + footer) points at
+`process.env.NEXT_PUBLIC_APP_URL`, defined in **`src/data/site.ts`**.
+
+Set it in `.env.local` (see `.env.example`):
+
+```bash
+NEXT_PUBLIC_APP_URL=https://app.kryx.io      # or http://localhost:5173, etc.
+```
+
+If/when the product dashboard lands in this repo (e.g. a `frontend/` app),
+point this at its deployed URL or route. The landing never imports the
+dashboard — it only links to it.
+
+> The waitlist form (`ui/WaitlistForm.tsx`) is **front-end only** right now.
+> Wire its `submit` handler to a real endpoint (`POST /api/waitlist`) when the
+> backend is live — look for the `TODO`.
 
 ---
 
-## Docs
+## Performance & accessibility
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [Coverage matrix](docs/coverage-matrix.md)
-- [Database](docs/DATABASE.md)
-- [Integrations](docs/INTEGRATIONS.md)
+- **Lazy 3D** — the WebGL bundle is `dynamic(..., { ssr: false })`; first paint
+  ships ~100 kB JS, three.js loads after.
+- **Adaptive scenes** — desktop GPUs get the full attack graph; weak
+  GPUs/mobile get the lighter crystalline core; reduced-motion / no-WebGL get a
+  static CSS poster.
+- **Reduced motion** — Lenis, the custom cursor, the terminal typing and all
+  Framer Motion animations (`MotionConfig reducedMotion="user"`) stand down.
+- **A11y** — semantic landmarks, skip-link, focus-visible rings, AA contrast,
+  the marquee is `aria-hidden` with an accessible static grid beside it.
+
+### Recommended Lighthouse check
+
+```bash
+npm run build && npm run start
+# then run Lighthouse against http://localhost:3000
+```
+
+Targets: Performance ≥ 80 (with 3D), Accessibility ≥ 95.
 
 ---
 
-© Kryx, proprietary. All rights reserved. See [LICENSE](LICENSE).
+## Content & safety note
+
+The terminal "scan", findings and attack chains are **fictional
+demonstration data**. The site contains **no working exploits or payloads** —
+it markets the product, it does not perform attacks.
+```
