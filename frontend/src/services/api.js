@@ -1,5 +1,5 @@
 // Kryx dashboard API client. Token-aware fetch over the nginx /api proxy.
-const BASE = (process.env.REACT_APP_API_URL || "") + "/api";
+const BASE = "/api";
 const TOKEN_KEY = "kryx_token";
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
