@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #050507;
+  --accent: #46e5ff;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  * {
+    @apply border-line;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    font-feature-settings: "ss01", "cv01";
+    overflow-x: hidden;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgba(70, 229, 255, 0.22);
+    color: #ffffff;
+  }
+
+  /* Focus ring — operator precision, never default browser blue */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #050507;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1a1c20;
+    border-radius: 999px;
+    border: 2px solid #050507;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #26292e;
+  }
+}
+
+@layer components {
+  /* Hairline panel — the recurring premium surface */
+  .panel {
+    @apply rounded-xl border border-line bg-panel;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.03),
+      0 24px 60px -30px rgba(0, 0, 0, 0.9);
+  }
+
+  .panel-2 {
+    @apply rounded-xl border border-line bg-panel-2;
+  }
+
+  /* Mono phase / status label */
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.34em] text-ink-faint;
+  }
+
+  .hairline {
+    @apply h-px w-full bg-line;
+  }
+
+  /* Big display type — tight grotesk */
+  .display {
+    @apply font-sans font-semibold tracking-tightest;
+    line-height: 0.98;
+  }
+
+  .accent-text {
+    color: var(--accent);
+  }
+
+  .accent-glow {
+    text-shadow:
+      0 0 24px rgba(70, 229, 255, 0.5),
+      0 0 48px rgba(70, 229, 255, 0.25);
+  }
+}
+
+@layer utilities {
+  /* Faint scan-grid + corner vignette stage background */
+  .scanfield {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  .scanfield-fine {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .radial-fade {
+    mask-image: radial-gradient(120% 80% at 50% 20%, #000 35%, transparent 78%);
+    -webkit-mask-image: radial-gradient(120% 80% at 50% 20%, #000 35%, transparent 78%);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .gradient-edge-x {
+    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  }
+
+  /* Film grain via SVG fractal noise */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: -50%;
+    pointer-events: none;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion: the engagement collapses to calm static blocks.    */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .grain::after,
+  .animate-grain-shift,
+  .animate-sweep {
+    display: none;
+  }
+}

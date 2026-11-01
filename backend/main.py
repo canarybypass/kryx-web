@@ -28,14 +28,23 @@ async def startup():
     await init_db()
 
 
-# Serve React frontend — must be after API routes
-_build = pathlib.Path(__file__).parent.parent / "frontend" / "build"
-if _build.exists():
-    app.mount("/static", StaticFiles(directory=str(_build / "static")), name="assets")
+# Serve React app at /app — must be after API routes
+_react = pathlib.Path(__file__).parent.parent / "frontend" / "build"
+if _react.exists():
+    app.mount("/app/static", StaticFiles(directory=str(_react / "static")), name="react-assets")
 
-    @app.get("/{full_path:path}", include_in_schema=False)
+    @app.get("/app/{full_path:path}", include_in_schema=False)
     async def spa(full_path: str):
-        return FileResponse(str(_build / "index.html"))
+        return FileResponse(str(_react / "index.html"))
+
+    @app.get("/app", include_in_schema=False)
+    async def spa_root():
+        return FileResponse(str(_react / "index.html"))
+
+# Serve Next.js landing at / — must be last
+_landing = pathlib.Path(__file__).parent.parent / "landing-next" / "out"
+if _landing.exists():
+    app.mount("/", StaticFiles(directory=str(_landing), html=True), name="landing")
 
 
 if __name__ == "__main__":
