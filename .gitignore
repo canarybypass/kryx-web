@@ -1,0 +1,28 @@
+# Secrets
+backend/.env
+*.env
+
+# Database
+backend/kryx.db
+*.db
+*.sqlite
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Node
+frontend/node_modules/
+frontend/build/
+frontend/.env.local
+
+# OS
+.DS_Store
+Thumbs.db

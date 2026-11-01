@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<!--
+  Kryx — landing (premium редизайн). Один самодостаточный файл, без сборки.
+  Контакты: форма -> FormSubmit (d28362242@gmail.com), Telegram @offsys.
+  Двуязычный: data-en / data-ru, переключатель в шапке.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kryx — security that proves itself</title>
+<meta name="description" content="Kryx is an autonomous AI offensive-security agent. It proves every vulnerability by execution, chains it to real impact, and writes the fix.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c0708; --ink2:#140b0c; --paper:#f5efe9;
+    --text:#f5efe9; --muted:#a2968d;
+    --a1:#ff9f45;  /* amber */
+    --a2:#ff6a4d;  /* coral */
+    --a3:#ff4d8d;  /* coral-magenta */
+    --a4:#ff3da0;  /* magenta */
+    --sans:'Space Grotesk',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --serif:'Instrument Serif',Georgia,serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  ::selection{background:var(--a1);color:#06060a}
+  body{background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+  /* ── living aurora background ── */
+  .aurora{position:fixed;inset:-20vh -10vw;z-index:-2;filter:blur(90px) saturate(140%);opacity:.55;pointer-events:none;will-change:transform}
+  .blob{position:absolute;border-radius:50%;mix-blend-mode:screen;will-change:transform}
+  .b1{width:48vw;height:48vw;left:-6vw;top:-6vh;background:radial-gradient(circle,var(--a2),transparent 60%);animation:drift1 26s ease-in-out infinite}
+  .b2{width:42vw;height:42vw;right:-8vw;top:4vh;background:radial-gradient(circle,var(--a1),transparent 60%);animation:drift2 30s ease-in-out infinite}
+  .b3{width:40vw;height:40vw;left:24vw;bottom:-12vh;background:radial-gradient(circle,var(--a3),transparent 62%);animation:drift3 34s ease-in-out infinite}
+  .b4{width:30vw;height:30vw;right:18vw;bottom:0;background:radial-gradient(circle,var(--a4),transparent 64%);animation:drift1 38s ease-in-out infinite reverse}
+  @keyframes drift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(8vw,6vh) scale(1.15)}}
+  @keyframes drift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-7vw,8vh) scale(1.1)}}
+  @keyframes drift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(5vw,-7vh) scale(1.2)}}
+  /* film grain */
+  .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.06;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+
+  /* ── nav ── */
+  header{position:fixed;top:0;left:0;right:0;z-index:50;transition:background .3s,backdrop-filter .3s}
+  header.scrolled{background:rgba(6,6,10,.6);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:78px}
+  .logo{font-weight:700;font-size:22px;letter-spacing:-.5px}
+  .logo i{font-style:normal;color:var(--a1)}
+  .nav-r{display:flex;align-items:center;gap:22px}
+  .nav-r a.lnk{color:var(--muted);font-size:14px;font-weight:500;transition:color .2s}
+  .nav-r a.lnk:hover{color:#fff}
+  .lang{display:flex;gap:2px;font-size:12px;font-weight:600}
+  .lang button{background:none;border:0;color:var(--muted);cursor:pointer;padding:4px 6px;transition:color .2s}
+  .lang button.on{color:var(--a1)}
+  .cta{position:relative;display:inline-flex;align-items:center;gap:8px;background:var(--a1);color:#06060a;font-weight:600;font-size:14px;padding:12px 22px;border-radius:100px;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;text-decoration:none;border:0;cursor:pointer}
+  .cta:hover{box-shadow:0 0 44px rgba(255,127,80,.5)}
+
+  /* ── hero ── */
+  .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding-top:78px;position:relative}
+  .eyebrow{font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-bottom:30px;display:flex;align-items:center;gap:12px}
+  .eyebrow::before{content:"";width:30px;height:1px;background:var(--a1)}
+  h1{font-weight:500;font-size:clamp(38px,6vw,76px);line-height:1.0;letter-spacing:-.025em}
+  h1 em{font-family:var(--serif);font-style:italic;font-weight:400;
+    background:linear-gradient(105deg,var(--a1),var(--a3),var(--a2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;padding-right:.06em}
+  .hero p.sub{margin-top:34px;max-width:46ch;font-size:clamp(16px,1.9vw,20px);color:var(--muted);font-weight:300}
+  .hero-cta{margin-top:44px;display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+  .ghost{color:#fff;font-weight:500;font-size:15px;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.25);padding-bottom:3px;transition:border-color .2s}
+  .ghost:hover{border-color:var(--a1)}
+  .scrollcue{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:10px}
+  .scrollcue span{width:1px;height:42px;background:linear-gradient(var(--a1),transparent);animation:cue 2s ease-in-out infinite}
+  @keyframes cue{0%,100%{opacity:.3;transform:scaleY(.5);transform-origin:top}50%{opacity:1;transform:scaleY(1)}}
+
+  /* reveal */
+  .rv{opacity:0;transform:translateY(34px);transition:opacity 1s cubic-bezier(.2,.8,.2,1),transform 1s cubic-bezier(.2,.8,.2,1)}
+  .rv.in{opacity:1;transform:none}
+
+  /* ── manifesto ── */
+  .manifesto{padding:18vh 0}
+  .manifesto h2{font-weight:400;font-size:clamp(24px,3.4vw,44px);line-height:1.12;letter-spacing:-.02em;max-width:20ch}
+  .manifesto h2 em{font-family:var(--serif);font-style:italic;color:var(--a1)}
+  .manifesto h2 .mut{color:var(--muted)}
+
+  /* ── marquee ── */
+  .marquee{padding:46px 0;border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08);overflow:hidden;white-space:nowrap;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+  .mq{display:inline-flex;gap:42px;animation:scroll 28s linear infinite;font-family:var(--serif);font-style:italic;font-size:clamp(20px,2.8vw,34px);color:#fff}
+  .mq span{opacity:.55;transition:opacity .3s}
+  .marquee:hover .mq{animation-play-state:paused}
+  .mq b{color:var(--a1);font-family:var(--sans);font-style:normal;font-weight:400}
+  @keyframes scroll{to{transform:translateX(-50%)}}
+
+  /* ── capabilities (editorial rows) ── */
+  .caps{padding:16vh 0}
+  .caps .lead{font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-bottom:60px}
+  .row{display:grid;grid-template-columns:90px 1fr;gap:30px;padding:38px 0;border-top:1px solid rgba(255,255,255,.09);align-items:baseline}
+  .row .num{font-family:var(--serif);font-style:italic;font-size:30px;color:var(--a1)}
+  .row h3{font-weight:500;font-size:clamp(19px,2.4vw,29px);letter-spacing:-.02em;line-height:1.15}
+  .row p{color:var(--muted);font-weight:300;font-size:16px;margin-top:14px;max-width:60ch}
+  .row:hover h3{color:var(--a1);transition:color .3s}
+
+  /* ── hero stat strip ── */
+  .stats{display:flex;gap:46px;margin-top:56px;flex-wrap:wrap}
+  .stats>div{display:flex;flex-direction:column;gap:5px}
+  .stats b{font-family:var(--serif);font-style:italic;font-weight:400;font-size:clamp(26px,3vw,38px);color:var(--a1);line-height:1}
+  .stats span{font-size:13px;color:var(--muted);letter-spacing:.01em}
+
+  /* ── arsenal (under the hood) ── */
+  .arsenal{padding:9vh 0;border-top:1px solid rgba(255,255,255,.08)}
+  .arsenal .lbl{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-bottom:30px}
+  .tools{display:flex;flex-wrap:wrap;gap:18px 44px;align-items:baseline}
+  .tools span{font-size:clamp(18px,2.3vw,28px);color:#6e5f58;font-weight:500;letter-spacing:-.01em;transition:color .35s}
+  .tools span:hover{color:var(--text)}
+  .tools span em{font-family:var(--serif);font-style:italic;color:var(--a1)}
+
+  /* ── proof ── */
+  .proof{padding:18vh 0;text-align:center}
+  .proof .kick{font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin-bottom:34px}
+  .proof .big{font-weight:400;font-size:clamp(26px,4vw,52px);line-height:1.1;letter-spacing:-.02em;max-width:22ch;margin:0 auto}
+  .proof .big em{font-family:var(--serif);font-style:italic;color:var(--a1)}
+  .proof .meta{margin-top:40px;display:inline-flex;gap:40px;flex-wrap:wrap;justify-content:center;color:var(--muted);font-size:14px}
+  .proof .meta b{color:#fff;font-weight:500;display:block;font-size:30px;font-family:var(--serif);font-style:italic}
+
+  /* ── contact ── */
+  .contact{padding:16vh 0 12vh}
+  .contact h2{font-weight:400;font-size:clamp(32px,5vw,62px);line-height:1.0;letter-spacing:-.025em}
+  .contact h2 em{font-family:var(--serif);font-style:italic;color:var(--a1)}
+  .contact .sub{color:var(--muted);font-weight:300;font-size:18px;margin-top:26px;max-width:48ch}
+  form{margin-top:50px;max-width:560px;display:flex;flex-direction:column;gap:0}
+  form .fld{position:relative;border-bottom:1px solid rgba(255,255,255,.16)}
+  form input,form textarea{width:100%;background:none;border:0;color:#fff;font-family:var(--sans);font-size:18px;padding:22px 2px;outline:none}
+  form textarea{resize:none;min-height:64px}
+  form input::placeholder,form textarea::placeholder{color:#55555f}
+  form .fld:focus-within{border-color:var(--a1)}
+  form button{margin-top:36px;align-self:flex-start}
+  .or{margin-top:22px;color:var(--muted);font-size:14px}
+  .or a{color:var(--a1);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+  .or a:hover{border-color:var(--a1)}
+  .legal{margin-top:30px;color:#55555f;font-size:13px;max-width:54ch;font-weight:300}
+
+  footer{padding:50px 0;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;color:var(--muted);font-size:13px}
+  footer .logo{font-size:18px}
+
+  @media(max-width:720px){
+    .nav-r a.lnk{display:none}
+    .row{grid-template-columns:1fr;gap:8px}
+    .row .num{font-size:22px}
+    .proof .meta{gap:26px}
+  }
+</style>
+</head>
+<body>
+<div class="aurora"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div></div>
+<div class="grain"></div>
+
+<header id="hdr">
+  <div class="wrap nav">
+    <div class="logo">KRY<i>X</i></div>
+    <div class="nav-r">
+      <a class="lnk" href="#what" data-en="Capabilities" data-ru="Возможности">Capabilities</a>
+      <a class="lnk" href="#proof" data-en="Proof" data-ru="Доказательство">Proof</a>
+      <div class="lang"><button id="en" class="on" onclick="setLang('en')">EN</button><span style="color:#333">/</span><button id="ru" onclick="setLang('ru')">RU</button></div>
+      <a class="cta" href="#contact" data-en="Request a scan" data-ru="Запросить скан">Request a scan</a>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div class="eyebrow rv" data-en="Autonomous AI offensive-security" data-ru="Автономный ИИ offensive-security">Autonomous AI offensive-security</div>
+    <h1 class="rv" data-en="Security that<br><em>proves</em> itself." data-ru="Защита, которая<br>сама себя <em>доказывает</em>.">Security that<br><em>proves</em> itself.</h1>
+    <p class="sub rv" data-en="Kryx hunts your apps and code, confirms every vulnerability by execution, chains it to real impact, and writes the fix. No maybes." data-ru="Kryx охотится по твоим приложениям и коду, подтверждает каждую уязвимость исполнением, сцепляет её в реальный импакт и пишет фикс. Никаких «возможно»." >Kryx hunts your apps and code, confirms every vulnerability by execution, chains it to real impact, and writes the fix. No maybes.</p>
+    <div class="hero-cta rv">
+      <a class="cta" href="#contact" data-en="Request a scan →" data-ru="Запросить скан →">Request a scan →</a>
+      <a class="ghost" href="#what" data-en="See how it works" data-ru="Как это работает">See how it works</a>
+    </div>
+    <div class="stats rv">
+      <div><b data-en="minutes" data-ru="минуты">minutes</b><span data-en="per scan — not days" data-ru="на скан — не дни">per scan — not days</span></div>
+      <div><b>0</b><span data-en="false positives" data-ru="ложных срабатываний">false positives</span></div>
+      <div><b data-en="proof + fix" data-ru="пруф + фикс">proof + fix</b><span data-en="on every finding" data-ru="на каждой находке">on every finding</span></div>
+    </div>
+  </div>
+  <div class="scrollcue"><span></span><div data-en="scroll" data-ru="вниз">scroll</div></div>
+</section>
+
+<!-- MANIFESTO -->
+<section class="manifesto"><div class="wrap">
+  <h2 class="rv" data-en="Most scanners shout <span class='mut'>maybe</span>. Kryx speaks only when it can <em>prove</em> it." data-ru="Сканеры кричат <span class='mut'>«возможно»</span>. Kryx говорит, только когда может <em>доказать</em>.">Most scanners shout <span class="mut">maybe</span>. Kryx speaks only when it can <em>prove</em> it.</h2>
+</div></section>
+
+<!-- MARQUEE -->
+<div class="marquee"><div class="mq" id="mq">
+  <span>SQL injection</span><b>·</b><span>XSS</span><b>·</b><span>RCE</span><b>·</b><span>SSRF</span><b>·</b><span>IDOR</span><b>·</b><span>SSTI</span><b>·</b><span>path traversal</span><b>·</b><span>open redirect</span><b>·</b><span>business logic</span><b>·</b><span>exposed secrets</span><b>·</b><span>known CVEs</span><b>·</b>
+  <span>SQL injection</span><b>·</b><span>XSS</span><b>·</b><span>RCE</span><b>·</b><span>SSRF</span><b>·</b><span>IDOR</span><b>·</b><span>SSTI</span><b>·</b><span>path traversal</span><b>·</b><span>open redirect</span><b>·</b><span>business logic</span><b>·</b><span>exposed secrets</span><b>·</b><span>known CVEs</span><b>·</b>
+</div></div>
+
+<!-- CAPABILITIES -->
+<section class="caps" id="what"><div class="wrap">
+  <div class="lead rv" data-en="What makes it different" data-ru="Чем отличается">What makes it different</div>
+  <div class="row rv"><div class="num">01</div><div>
+    <h3 data-en="It proves every finding by execution" data-ru="Доказывает каждую находку исполнением">It proves every finding by execution</h3>
+    <p data-en="Command injection is confirmed by making the server compute. SSRF by making it call back. No reflection guesses — near-zero false positives." data-ru="Инъекция команд — тем, что сервер сам считает. SSRF — тем, что сервер стучится к нам. Никаких догадок — ложных срабатываний почти ноль.">Command injection is confirmed by making the server compute. SSRF by making it call back. No reflection guesses — near-zero false positives.</p></div></div>
+  <div class="row rv"><div class="num">02</div><div>
+    <h3 data-en="It reads your code and attacks your app" data-ru="Читает твой код и атакует твоё приложение">It reads your code and attacks your app</h3>
+    <p data-en="White-box for the root cause, black-box for the proof — together. Most tools do one. Kryx does both." data-ru="White-box ради первопричины, black-box ради доказательства — вместе. Большинство умеет одно. Kryx — оба.">White-box for the root cause, black-box for the proof — together. Most tools do one. Kryx does both.</p></div></div>
+  <div class="row rv"><div class="num">03</div><div>
+    <h3 data-en="It chains bugs into real impact" data-ru="Сцепляет баги в реальный импакт">It chains bugs into real impact</h3>
+    <p data-en="Leaked secret → credentials → authenticated access → data exfiltration. Impact, not a checklist." data-ru="Утечка → креды → доступ → выгрузка данных. Импакт, а не чеклист.">Leaked secret → credentials → authenticated access → data exfiltration. Impact, not a checklist.</p></div></div>
+  <div class="row rv"><div class="num">04</div><div>
+    <h3 data-en="It argues every finding out loud" data-ru="Проговаривает каждую находку вслух">It argues every finding out loud</h3>
+    <p data-en="An attacker argues it's real, a defender attacks it, a judge rules — before it reaches your report. You see the reasoning, not a black box." data-ru="Атакующий доказывает, защитник опровергает, судья решает — до того, как находка попадёт в отчёт. Ты видишь рассуждение, а не чёрный ящик.">An attacker argues it's real, a defender attacks it, a judge rules — before it reaches your report. You see the reasoning, not a black box.</p></div></div>
+</div></section>
+
+<!-- ARSENAL -->
+<section class="arsenal"><div class="wrap">
+  <div class="lbl rv" data-en="Under the hood" data-ru="Под капотом">Under the hood</div>
+  <div class="tools rv">
+    <span>nuclei</span><span>sqlmap</span><span>semgrep</span><span>gitleaks</span><span>Playwright</span><span>OWASP&nbsp;Top&nbsp;10</span><span>out-of-band&nbsp;SSRF</span><span>CVE&nbsp;intel</span><span><em>proof-by-execution</em></span>
+  </div>
+</div></section>
+
+<!-- PROOF -->
+<section class="proof" id="proof"><div class="wrap">
+  <div class="kick rv" data-en="On a real target" data-ru="На реальной цели">On a real target</div>
+  <div class="big rv" data-en="One scan surfaced production database credentials — <em>proven</em>, not guessed." data-ru="Один скан вытащил продакшн-креды БД — <em>доказано</em>, не угадано.">One scan surfaced production database credentials — <em>proven</em>, not guessed.</div>
+  <div class="meta rv">
+    <div><b>0</b><span data-en="false positives" data-ru="ложных срабатываний">false positives</span></div>
+    <div><b>1</b><span data-en="critical, proven" data-ru="критичная, доказана">critical, proven</span></div>
+    <div><b>∞</b><span data-en="fixes included" data-ru="фиксы включены">fixes included</span></div>
+  </div>
+</div></section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact"><div class="wrap">
+  <h2 class="rv" data-en="Point Kryx at<br>your <em>own</em> infrastructure." data-ru="Наведи Kryx на<br><em>свою</em> инфраструктуру.">Point Kryx at<br>your <em>own</em> infrastructure.</h2>
+  <p class="sub rv" data-en="Tell us the target you own. We verify ownership, run a full scan, and deliver a report of proven findings — with fixes." data-ru="Назови цель, которой ты владеешь. Подтверждаем владение, прогоняем полный скан и отдаём отчёт из доказанных находок — с фиксами.">Tell us the target you own. We verify ownership, run a full scan, and deliver a report of proven findings — with fixes.</p>
+  <form class="rv" action="https://formsubmit.co/d28362242@gmail.com" method="POST">
+    <input type="hidden" name="_subject" value="Kryx — scan request">
+    <input type="hidden" name="_captcha" value="false">
+    <input type="hidden" name="_template" value="table">
+    <input type="hidden" name="_next" value="https://xxxoff.github.io/?sent=1">
+    <div class="fld"><input name="name" required data-en-ph="Your name" data-ru-ph="Имя" placeholder="Your name"></div>
+    <div class="fld"><input name="email" type="email" required data-en-ph="Email" data-ru-ph="Email" placeholder="Email"></div>
+    <div class="fld"><input name="domain" required data-en-ph="Domain you own (the target)" data-ru-ph="Домен, которым ты владеешь (цель)" placeholder="Domain you own (the target)"></div>
+    <div class="fld"><textarea name="message" data-en-ph="Anything else? (optional)" data-ru-ph="Что-то ещё? (необязательно)" placeholder="Anything else? (optional)"></textarea></div>
+    <button class="cta" type="submit" data-en="Send request →" data-ru="Отправить заявку →">Send request →</button>
+  </form>
+  <p class="or" data-en="…or message me on Telegram: <a href='https://t.me/offsys'>@offsys</a>" data-ru="…или напиши в Telegram: <a href='https://t.me/offsys'>@offsys</a>">…or message me on Telegram: <a href="https://t.me/offsys">@offsys</a></p>
+  <p class="legal rv" data-en="Authorized testing only. Kryx scans a target only after you prove you own or control it. We test what you authorize — nothing else." data-ru="Только авторизованное тестирование. Kryx сканирует цель только после доказательства владения. Мы тестируем только то, что ты разрешил.">Authorized testing only. Kryx scans a target only after you prove you own or control it. We test what you authorize — nothing else.</p>
+</div></section>
+
+<footer><div class="wrap" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;width:100%">
+  <div class="logo">KRY<i>X</i></div>
+  <div>© <span id="yr"></span> Kryx — <span data-en="security that proves itself" data-ru="защита, которая себя доказывает">security that proves itself</span></div>
+  <div><a href="https://t.me/offsys" style="color:var(--a1);text-decoration:none">@offsys</a></div>
+</div></footer>
+
+<script>
+  function setLang(l){
+    document.documentElement.lang=l;
+    document.getElementById('en').classList.toggle('on',l==='en');
+    document.getElementById('ru').classList.toggle('on',l==='ru');
+    document.querySelectorAll('[data-'+l+']').forEach(e=>e.innerHTML=e.getAttribute('data-'+l));
+    document.querySelectorAll('[data-'+l+'-ph]').forEach(e=>e.setAttribute('placeholder',e.getAttribute('data-'+l+'-ph')));
+    try{localStorage.setItem('kryx_lang',l)}catch(e){}
+  }
+  document.getElementById('yr').textContent=new Date().getFullYear();
+  (function(){try{var s=localStorage.getItem('kryx_lang');if(s&&s!=='en')setLang(s)}catch(e){}})();
+
+  // nav bg on scroll
+  const hdr=document.getElementById('hdr');
+  addEventListener('scroll',()=>hdr.classList.toggle('scrolled',scrollY>40),{passive:true});
+
+  // reveal on scroll (staggered within a section)
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.18});
+  document.querySelectorAll('.rv').forEach((el,i)=>{el.style.transitionDelay=((i%5)*90)+'ms';io.observe(el)});
+
+  // aurora reacts to cursor (subtle parallax)
+  const aur=document.querySelector('.aurora');
+  addEventListener('pointermove',(e)=>{
+    const x=(e.clientX/innerWidth-.5),y=(e.clientY/innerHeight-.5);
+    aur.style.transform=`translate(${x*-26}px,${y*-26}px)`;
+  },{passive:true});
+
+  // magnetic CTAs
+  document.querySelectorAll('.cta').forEach(btn=>{
+    btn.addEventListener('pointermove',e=>{const r=btn.getBoundingClientRect();btn.style.transform=`translate(${(e.clientX-r.left-r.width/2)*.25}px,${(e.clientY-r.top-r.height/2)*.35}px)`});
+    btn.addEventListener('pointerleave',()=>btn.style.transform='');
+  });
+</script>
+</body>
+</html>
