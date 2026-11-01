@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api } from "../services/api";
 
-export default function AuthScreen({ onAuthed }) {
+export default function AuthScreen({ onAuthed, onBack }) {
   const [mode, setMode] = useState("login"); // login | register
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,6 +26,11 @@ export default function AuthScreen({ onAuthed }) {
 
   return (
     <div style={s.wrap}>
+      {onBack && (
+        <button onClick={onBack} style={{ position: "fixed", top: 20, left: 20, background: "none", border: "none", color: "#5a5a7a", cursor: "pointer", fontSize: 13, fontFamily: "monospace" }}>
+          ← Back
+        </button>
+      )}
       <div style={s.card}>
         <div style={s.brand}>
           <span style={s.dot} /> Kryx
