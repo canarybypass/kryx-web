@@ -12,7 +12,6 @@ export default function Navbar() {
   const active = useActivePhase();
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
-  const [appOpen, setAppOpen] = useState(false);
 
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 24));
 
@@ -20,26 +19,6 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Full-screen app overlay */}
-      {appOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "#080810", display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", alignItems: "center", padding: "0 20px", height: 48, borderBottom: "1px solid #1a1a2e", flexShrink: 0 }}>
-            <button
-              onClick={() => setAppOpen(false)}
-              style={{ background: "none", border: "none", color: "#46E5FF", cursor: "pointer", fontFamily: "monospace", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}
-            >
-              ← back to site
-            </button>
-            <span style={{ marginLeft: "auto", fontFamily: "monospace", fontSize: 11, color: "#3a3a5a", letterSpacing: "0.2em" }}>KRYX // SCAN CONSOLE</span>
-          </div>
-          <iframe
-            src="/app"
-            style={{ flex: 1, border: "none", width: "100%" }}
-            title="Kryx App"
-          />
-        </div>
-      )}
-
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${
           scrolled ? "border-b border-line bg-bg/70 backdrop-blur-xl" : "border-b border-transparent bg-transparent"
@@ -83,19 +62,19 @@ export default function Navbar() {
               <span className={locale === "ru" ? "text-ink" : ""}>RU</span>
             </button>
 
-            <button
-              onClick={() => setAppOpen(true)}
+            <a
+              href="/app"
               className="hidden rounded-md px-3 py-1.5 font-mono text-[12px] text-ink-dim transition-colors hover:text-ink sm:inline-block"
             >
               {t.nav.launch}
-            </button>
+            </a>
 
-            <button
-              onClick={() => setAppOpen(true)}
+            <a
+              href="/app"
               className="group relative rounded-md border border-accent-line bg-accent-soft px-3.5 py-1.5 font-mono text-[12px] text-accent transition-all hover:bg-accent/20"
             >
               {t.nav.request}
-            </button>
+            </a>
           </div>
         </nav>
       </header>
