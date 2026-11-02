@@ -27,9 +27,15 @@ async def startup():
     await init_db()
 
 
+# React scan app at /app — must be mounted BEFORE landing so Starlette checks it first
 _react = pathlib.Path(__file__).parent.parent / "frontend" / "build"
 if _react.exists():
-    app.mount("/", StaticFiles(directory=str(_react), html=True), name="spa")
+    app.mount("/app", StaticFiles(directory=str(_react), html=True), name="react-app")
+
+# Original Next.js landing at / — catches everything else
+_landing = pathlib.Path(__file__).parent.parent / "landing-next" / "out"
+if _landing.exists():
+    app.mount("/", StaticFiles(directory=str(_landing), html=True), name="landing")
 
 
 if __name__ == "__main__":
