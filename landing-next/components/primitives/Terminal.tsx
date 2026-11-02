@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useInView, useReducedMotion } from "framer-motion";
+import { useInView } from "framer-motion";
 
 export type LineKind = "out" | "sys" | "hit" | "leak" | "ok" | "err" | "dim";
 
@@ -50,8 +50,7 @@ export default function Terminal({
 }: TerminalProps) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.4 });
-  const reduce = useReducedMotion();
-  const animate = typing && !reduce;
+  const animate = typing;
 
   // typedLine = index of line currently being typed; typedChars = chars shown.
   const [line, setLine] = useState(animate ? 0 : lines.length);

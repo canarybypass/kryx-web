@@ -5,7 +5,7 @@ import { I18nProvider } from "@/lib/i18n";
 import SmoothScroll from "@/components/SmoothScroll";
 import Navbar from "@/components/Navbar";
 import TimelineRail from "@/components/TimelineRail";
-import { MotionConfig } from "framer-motion";
+import MotionProvider from "@/components/MotionProvider";
 
 const sans = Space_Grotesk({
   subsets: ["latin"],
@@ -47,14 +47,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <body className="relative min-h-screen bg-bg text-ink">
-        <MotionConfig reducedMotion="never">
+        <MotionProvider>
           <I18nProvider>
             <SmoothScroll />
             <Navbar />
             <TimelineRail />
             <main className="relative">{children}</main>
           </I18nProvider>
-        </MotionConfig>
+        </MotionProvider>
       </body>
     </html>
   );
