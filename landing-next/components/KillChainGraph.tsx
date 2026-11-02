@@ -36,7 +36,6 @@ function Edge({
   index,
   total,
   progress,
-  reduce,
 }: {
   d: string;
   index: number;
