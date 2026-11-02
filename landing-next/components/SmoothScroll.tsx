@@ -10,11 +10,14 @@ import Lenis from "lenis";
  */
 export default function SmoothScroll() {
   useEffect(() => {
+    // Touch devices have native momentum scroll — Lenis not needed and breaks
+    // Framer Motion's whileInView (IntersectionObserver conflict).
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+
     const lenis = new Lenis({
       duration: 1.1,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      touchMultiplier: 1.6,
     });
 
     document.documentElement.classList.add("lenis");
