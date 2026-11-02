@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 import {
   motion,
   useMotionValueEvent,
-  useReducedMotion,
   useScroll,
   useTransform,
   type MotionValue,
@@ -43,7 +42,6 @@ function Edge({
   index: number;
   total: number;
   progress: MotionValue<number>;
-  reduce: boolean;
 }) {
   const length = useTransform(progress, [index / total, (index + 1) / total], [0, 1], { clamp: true });
   return (
@@ -55,7 +53,7 @@ function Edge({
         stroke="url(#chainGrad)"
         strokeWidth={0.55}
         strokeLinecap="round"
-        style={{ pathLength: reduce ? 1 : length }}
+        style={{ pathLength: length }}
       />
     </>
   );
@@ -63,15 +61,13 @@ function Edge({
 
 export default function KillChainGraph() {
   const { t } = useI18n();
-  const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.7", "end 0.6"] });
 
-  const [lit, setLit] = useState(reduce ? chain.nodes.length : 1);
+  const [lit, setLit] = useState(1);
   const [selected, setSelected] = useState<string>(chain.nodes[0].id);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
-    if (reduce) return;
     setLit(Math.max(1, Math.min(chain.nodes.length, Math.floor(v * chain.nodes.length) + 1)));
   });
 
@@ -94,7 +90,6 @@ export default function KillChainGraph() {
               index={i}
               total={chain.edges.length}
               progress={scrollYProgress}
-              reduce={!!reduce}
             />
           ))}
         </svg>

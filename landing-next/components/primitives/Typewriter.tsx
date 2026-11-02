@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useInView, useReducedMotion } from "framer-motion";
+import { useInView } from "framer-motion";
 
 interface TypewriterProps {
   text: string;
@@ -23,11 +23,9 @@ export default function Typewriter({
 }: TypewriterProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.6 });
-  const reduce = useReducedMotion();
-  const [count, setCount] = useState(reduce ? text.length : 0);
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (reduce) return;
     if (!inView) return;
     let i = 0;
     let timer: ReturnType<typeof setTimeout>;
@@ -40,7 +38,7 @@ export default function Typewriter({
       clearTimeout(start);
       clearTimeout(timer);
     };
-  }, [inView, reduce, text, speed, startDelay]);
+  }, [inView, text, speed, startDelay]);
 
   return (
     <span ref={ref} className={className}>

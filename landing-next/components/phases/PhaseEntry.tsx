@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { OPERATION } from "@/lib/content";
 import { useI18n } from "@/lib/i18n";
@@ -8,13 +8,12 @@ import Typewriter from "../primitives/Typewriter";
 
 export default function PhaseEntry() {
   const { t } = useI18n();
-  const reduce = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
 
   // Hero drifts up and dims slightly as the operation begins.
-  const y = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -80]);
-  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, reduce ? 1 : 0]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, -80]);
+  const opacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
   return (
     <section
@@ -25,11 +24,9 @@ export default function PhaseEntry() {
       {/* layered background */}
       <div className="absolute inset-0 scanfield radial-fade opacity-70" />
       <div className="absolute inset-0 scanfield-fine radial-fade opacity-40" />
-      {!reduce && (
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -inset-x-10 h-24 bg-gradient-to-b from-transparent via-accent/[0.06] to-transparent blur-xl animate-sweep" />
-        </div>
-      )}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -inset-x-10 h-24 bg-gradient-to-b from-transparent via-accent/[0.06] to-transparent blur-xl animate-sweep" />
+      </div>
       <div className="grain pointer-events-none absolute inset-0" />
       {/* center spotlight */}
       <div
@@ -100,8 +97,7 @@ export default function PhaseEntry() {
       </motion.div>
 
       {/* scroll hint */}
-      {!reduce && (
-        <motion.div
+      <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 1.6 }}
@@ -118,7 +114,6 @@ export default function PhaseEntry() {
             ↓
           </motion.span>
         </motion.div>
-      )}
 
       {/* target whisper, bottom-right */}
       <div className="absolute bottom-8 right-8 z-10 hidden font-mono text-[10px] tracking-[0.2em] text-ink-faint lg:block">
