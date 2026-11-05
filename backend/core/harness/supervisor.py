@@ -216,7 +216,15 @@ class Supervisor:
             "notes": self.result.waf.notes,
         })
 
-        # If origin IP found — tell auth_context to route all requests through it
+        # WAF detected → activate curl_cffi bypass client for ALL probe requests
+        # This handles TLS fingerprint (JA3/JA4), HTTP/2 SETTINGS, Chrome headers,
+        # CF challenge solving — regardless of whether origin IP was found.
+        if self.result.waf.detected:
+            from core.harness.auth_context import activate_waf_bypass
+            activate_waf_bypass(self.target)
+            await self._emit("status", "waf_bypass_active")
+
+        # If origin IP also found — additionally route traffic around the WAF layer
         if self.result.waf.origin_verified and self.result.waf.origin_ip:
             from core.harness.auth_context import set_origin_bypass
             set_origin_bypass(self.result.waf.origin_ip, self.result.waf.bypass_headers)

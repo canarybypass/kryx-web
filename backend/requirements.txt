@@ -12,6 +12,10 @@ websockets>=12.0
 # Tool integrations
 msgpack==1.1.0
 playwright==1.49.0
+# WAF bypass
+curl_cffi>=0.7.0
+playwright-stealth>=1.0.6
+
 # Auth + DB
 sqlalchemy==2.0.36
 aiosqlite==0.20.0

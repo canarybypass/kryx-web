@@ -17,6 +17,11 @@ _COOKIES: dict = {}
 _ORIGIN_IP: str = ""
 _ORIGIN_HEADERS: dict = {}  # {"Host": "target.com"}
 
+# WAF bypass mode: when True, client() returns a WafBypassClient (curl_cffi)
+# instead of httpx. Set by supervisor after WAF detection.
+_WAF_BYPASS_ACTIVE: bool = False
+_WAF_TARGET_URL: str = ""
+
 
 def set_auth(headers: dict | None = None, cookies: dict | None = None):
     global _HEADERS, _COOKIES
@@ -37,9 +42,29 @@ def clear_origin_bypass():
     _ORIGIN_HEADERS = {}
 
 
+def activate_waf_bypass(target_url: str):
+    """Switch all probe requests to WafBypassClient (curl_cffi Chrome impersonation)."""
+    global _WAF_BYPASS_ACTIVE, _WAF_TARGET_URL
+    _WAF_BYPASS_ACTIVE = True
+    _WAF_TARGET_URL = target_url
+
+
+def deactivate_waf_bypass():
+    global _WAF_BYPASS_ACTIVE, _WAF_TARGET_URL
+    _WAF_BYPASS_ACTIVE = False
+    _WAF_TARGET_URL = ""
+
+
+def is_waf_bypass_active() -> bool:
+    return _WAF_BYPASS_ACTIVE
+
+
 def clear_auth():
     set_auth({}, {})
     clear_origin_bypass()
+    deactivate_waf_bypass()
+    from core.harness.waf_bypass import clear_sessions
+    clear_sessions()
 
 
 def is_authed() -> bool:
@@ -54,26 +79,46 @@ def auth_cookies() -> dict:
     return dict(_COOKIES)
 
 
-def client(target_url: str = "", **kwargs) -> httpx.AsyncClient:
-    """httpx client pre-loaded with auth + optional origin bypass (for TARGET requests).
+def client(target_url: str = "", **kwargs) -> "httpx.AsyncClient | WafBypassClient":
+    """Return the right HTTP client for target requests.
 
-    When origin bypass is active, requests to the target domain are transparently
-    routed to the real server IP via a custom transport that rewrites the host.
-    External API requests (NVD, Shodan, LLM) must NOT use this client.
+    Decision tree:
+      1. WAF bypass active  → WafBypassClient (curl_cffi Chrome 120 impersonation)
+         Handles: TLS fingerprint (JA3/JA4), HTTP/2 SETTINGS, Chrome headers,
+                  CF challenge solving, jittered delays, proxy support
+      2. Origin IP known    → httpx + _OriginBypassTransport (direct IP, Host header)
+      3. Normal             → plain httpx with auth headers/cookies
+
+    External API calls (NVD, Shodan, LLM) must NOT use this client.
     """
-    headers = {**_ORIGIN_HEADERS, **_HEADERS, **(kwargs.pop("headers", None) or {})}
-    cookies = {**_COOKIES, **(kwargs.pop("cookies", None) or {})}
+    extra_headers = {**_ORIGIN_HEADERS, **_HEADERS, **(kwargs.pop("headers", None) or {})}
+    extra_cookies = {**_COOKIES, **(kwargs.pop("cookies", None) or {})}
+
+    if _WAF_BYPASS_ACTIVE:
+        from core.harness.waf_bypass import WafBypassClient
+        return WafBypassClient(
+            target_url=target_url or _WAF_TARGET_URL,
+            extra_cookies=extra_cookies,
+            extra_headers=extra_headers,
+        )
 
     transport = None
     if _ORIGIN_IP and target_url:
         transport = _OriginBypassTransport(target_url, _ORIGIN_IP)
 
     return httpx.AsyncClient(
-        headers=headers or None,
-        cookies=cookies or None,
+        headers=extra_headers or None,
+        cookies=extra_cookies or None,
         transport=transport,
         **kwargs,
     )
+
+
+# forward reference satisfied at runtime
+try:
+    from core.harness.waf_bypass import WafBypassClient
+except ImportError:
+    WafBypassClient = None  # type: ignore
 
 
 class _OriginBypassTransport(httpx.AsyncBaseTransport):
