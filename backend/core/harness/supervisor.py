@@ -157,6 +157,7 @@ from core.harness.auth_context import set_auth, clear_auth, is_authed
 from core.harness.debate import DebateStage
 from core.harness.chain_builder import ChainBuilderStage
 from core.harness.reporter import ReporterStage
+from core.harness.waf_detector import analyze_waf, WafContext
 
 
 @dataclass
@@ -169,6 +170,7 @@ class ScanResult:
     attack_chains: list = field(default_factory=list)
     report: str = ""
     stats: dict = field(default_factory=dict)
+    waf: WafContext = field(default_factory=WafContext)
 
 
 class Supervisor:
@@ -198,13 +200,41 @@ class Supervisor:
         if is_authed():
             await self._emit("auth", {"authenticated": True})
 
-        await self._emit("status", "recon")
+        await self._emit("status", "waf_detection")
         stage_times: dict = {}
+
+        # Stage 0: WAF detection + origin IP discovery
+        _t = time.monotonic()
+        self.result.waf = await analyze_waf(self.target)
+        stage_times["waf"] = round(time.monotonic() - _t, 1)
+        await self._emit("waf", {
+            "detected": self.result.waf.detected,
+            "waf_name": self.result.waf.waf_name,
+            "confidence": self.result.waf.confidence,
+            "origin_ip": self.result.waf.origin_ip,
+            "origin_verified": self.result.waf.origin_verified,
+            "notes": self.result.waf.notes,
+        })
+
+        # If origin IP found — tell auth_context to route all requests through it
+        if self.result.waf.origin_verified and self.result.waf.origin_ip:
+            from core.harness.auth_context import set_origin_bypass
+            set_origin_bypass(self.result.waf.origin_ip, self.result.waf.bypass_headers)
+            await self._emit("status", "origin_bypass_active")
+
+        await self._emit("status", "recon")
 
         # Stage 1: Reconnaissance
         _t = time.monotonic()
         recon = ReconStage(self.target)
         self.result.recon = await recon.run()
+        # Attach WAF info to recon so hunters see it in context
+        self.result.recon["waf"] = {
+            "detected": self.result.waf.detected,
+            "waf_name": self.result.waf.waf_name,
+            "origin_ip": self.result.waf.origin_ip,
+            "origin_verified": self.result.waf.origin_verified,
+        }
         stage_times["recon"] = round(time.monotonic() - _t, 1)
         await self._emit("stage_time", {"stage": "recon", "elapsed": stage_times["recon"]})
         await self._emit("status", "crawling")
