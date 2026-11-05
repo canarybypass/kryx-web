@@ -472,6 +472,14 @@ class OriginFinder:
 # High-level entry point used by Supervisor
 # ---------------------------------------------------------------------------
 
+_last_detected_waf: str = ""
+
+
+def _last_waf_name() -> str:
+    """Return the last WAF name detected this session (empty string if none)."""
+    return _last_detected_waf
+
+
 async def analyze_waf(target: str) -> WafContext:
     """Run WAF detection + origin finder. Returns a WafContext.
 
@@ -480,9 +488,11 @@ async def analyze_waf(target: str) -> WafContext:
       - What is its name?
       - Is there a bypass IP we should use instead?
     """
+    global _last_detected_waf
     ctx = await WafDetector(target).detect()
 
     if ctx.detected:
+        _last_detected_waf = ctx.waf_name
         origin = await OriginFinder(target).find()
         if origin.get("verified"):
             ctx.origin_ip = origin["origin_ip"]
